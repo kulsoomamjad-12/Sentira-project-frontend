@@ -1,40 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { getSocket } from '../services/socket';
-import { getFeedback, getTopicTrends, getAnalyticsSummary } from '../services/api';
+import React, { useEffect, useRef, useState } from 'react';
+import { getFeedback, getTickets, getTopicTrends, getAnalyticsSummary } from '../services/api';
 import { buildPulseMessage } from '../utils/pulse';
 
 const MAX_NOTIFICATIONS = 20;
 
-function describe(type, payload) {
-  if (type === 'new-feedback') {
-    const who = payload.customerName || 'a customer';
-    const snippet = (payload.summary || payload.comment || '').slice(0, 80);
-    if (payload.urgency === 'critical') return `⚠️ Critical review from ${who}: "${snippet}"`;
-    if (payload.urgency === 'high') return `🚨 Urgent review from ${who} needs fixing: "${snippet}"`;
-    if (payload.sentiment === 'Negative') return `🔴 Negative review from ${who}: "${snippet}"`;
-    return `New review from ${who}: "${snippet}"`;
-  }
-  if (type === 'ticket-created') {
-    return `New ticket opened on: "${(payload.feedback?.comment || '').slice(0, 60)}"`;
-  }
-  if (type === 'ticket-updated') {
-    const { ticket, updatedBy, previousStatus } = payload;
-    const who = updatedBy?.name || 'A teammate';
-    const snippet = (ticket.feedback?.comment || '').slice(0, 60);
-    const note = ticket.resolutionNotes ? ` — note: "${ticket.resolutionNotes.slice(0, 80)}"` : '';
+// Polls for new feedback/tickets instead of a Socket.IO push — the backend
+// runs on Vercel's serverless functions, which can't hold a live WebSocket
+// connection open between requests. 20s keeps this feeling close to
+// real-time without hammering the API. One accepted trade-off vs. real
+// push: there's no cheap way from polling alone to know WHO made a change,
+// so unlike the old socket rooms (which excluded the acting user), you can
+// occasionally see a notification for your own edit.
+const POLL_INTERVAL_MS = 20000;
 
-    if (ticket.status === 'resolved') {
-      return `✅ ${who} resolved the ticket on: "${snippet}"${note}`;
-    }
-    if (ticket.status === 'in-progress' && previousStatus === 'open') {
-      return `👀 ${who} has seen the ticket and started working on: "${snippet}"${note}`;
-    }
-    if (ticket.status === previousStatus) {
-      return `📝 ${who} left a note on the ticket for: "${snippet}"${note}`;
-    }
-    return `🔄 ${who} moved the ticket to "${ticket.status}" — "${snippet}"${note}`;
-  }
-  return 'New activity';
+function describeFeedback(item) {
+  const who = item.customerName || 'a customer';
+  const snippet = (item.aiAnalysis?.summary || item.comment || '').slice(0, 80);
+  if (item.aiAnalysis?.urgency === 'critical') return `⚠️ Critical review from ${who}: "${snippet}"`;
+  if (item.aiAnalysis?.urgency === 'high') return `🚨 Urgent review from ${who} needs fixing: "${snippet}"`;
+  if (item.aiAnalysis?.sentiment === 'Negative') return `🔴 Negative review from ${who}: "${snippet}"`;
+  return `New review from ${who}: "${snippet}"`;
+}
+
+function describeTicketCreated(ticket) {
+  return `New ticket opened on: "${(ticket.feedback?.comment || '').slice(0, 60)}"`;
+}
+
+function describeTicketUpdated(ticket) {
+  const snippet = (ticket.feedback?.comment || '').slice(0, 60);
+  const note = ticket.resolutionNotes ? ` — note: "${ticket.resolutionNotes.slice(0, 80)}"` : '';
+  if (ticket.status === 'resolved') return `✅ Ticket resolved on: "${snippet}"${note}`;
+  if (ticket.status === 'in-progress') return `👀 Ticket picked up on: "${snippet}"${note}`;
+  return `🔄 Ticket moved to "${ticket.status}" — "${snippet}"${note}`;
 }
 
 export default function NotificationBell() {
@@ -42,9 +39,13 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(null);
 
+  // null until the first poll establishes a baseline — nothing that already
+  // existed before this bell mounted should generate a notification.
+  const seenFeedbackIds = useRef(null);
+  const seenTicketUpdatedAt = useRef(null);
+
   // The same one-sentence insight that used to live in a Dashboard banner —
-  // now shown here instead. Refreshed on mount and whenever a new review
-  // comes in, so it stays current without needing the Dashboard open.
+  // shown here instead, refreshed on mount and whenever new feedback shows up.
   const refreshPulse = () => {
     Promise.all([getFeedback(), getTopicTrends(), getAnalyticsSummary()])
       .then(([feedbackRes, trendsRes, summaryRes]) => {
@@ -53,43 +54,64 @@ export default function NotificationBell() {
       .catch(() => {});
   };
 
+  const pushNotification = (type, id, message) => {
+    setNotifications((prev) =>
+      [{ id: `${type}-${id}-${Date.now()}`, type, message, createdAt: new Date(), read: false }, ...prev].slice(
+        0,
+        MAX_NOTIFICATIONS
+      )
+    );
+  };
+
   useEffect(() => {
+    let cancelled = false;
+
+    const poll = async () => {
+      try {
+        const [feedbackRes, ticketsRes] = await Promise.all([getFeedback(), getTickets()]);
+        if (cancelled) return;
+        const feedback = feedbackRes.data.feedback;
+        const tickets = ticketsRes.data.tickets;
+
+        if (seenFeedbackIds.current === null) {
+          // First poll: record what already exists, silently — no
+          // notifications for anything that isn't actually new.
+          seenFeedbackIds.current = new Set(feedback.map((f) => f._id));
+          seenTicketUpdatedAt.current = new Map(tickets.map((t) => [t._id, t.updatedAt]));
+          return;
+        }
+
+        let sawNewFeedback = false;
+        for (const item of feedback) {
+          if (!seenFeedbackIds.current.has(item._id)) {
+            seenFeedbackIds.current.add(item._id);
+            pushNotification('new-feedback', item._id, describeFeedback(item));
+            sawNewFeedback = true;
+          }
+        }
+
+        for (const ticket of tickets) {
+          const lastSeen = seenTicketUpdatedAt.current.get(ticket._id);
+          if (lastSeen === undefined) {
+            pushNotification('ticket-created', ticket._id, describeTicketCreated(ticket));
+          } else if (lastSeen !== ticket.updatedAt) {
+            pushNotification('ticket-updated', `${ticket._id}-${ticket.updatedAt}`, describeTicketUpdated(ticket));
+          }
+          seenTicketUpdatedAt.current.set(ticket._id, ticket.updatedAt);
+        }
+
+        if (sawNewFeedback) refreshPulse();
+      } catch {
+        // A poll failing (brief network blip) just tries again next tick.
+      }
+    };
+
     refreshPulse();
-
-    const socket = getSocket();
-
-    // `id` is the notification-list key, computed differently per event
-    // shape (a bare ticket for ticket-created, {ticket, updatedBy,...} for
-    // ticket-updated) — kept separate from `payload` so describe() still
-    // gets the raw shape it expects.
-    const pushNotification = (type, id, payload) => {
-      setNotifications((prev) => [
-        {
-          id: `${type}-${id}-${Date.now()}`,
-          type,
-          message: describe(type, payload),
-          createdAt: new Date(),
-          read: false,
-        },
-        ...prev,
-      ].slice(0, MAX_NOTIFICATIONS));
-    };
-
-    const onNewFeedback = (payload) => {
-      pushNotification('new-feedback', payload.id || payload._id, payload);
-      refreshPulse();
-    };
-    const onTicketCreated = (payload) => pushNotification('ticket-created', payload._id, payload);
-    const onTicketUpdated = (payload) => pushNotification('ticket-updated', payload.ticket._id, payload);
-
-    socket.on('new-feedback', onNewFeedback);
-    socket.on('ticket-created', onTicketCreated);
-    socket.on('ticket-updated', onTicketUpdated);
-
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
     return () => {
-      socket.off('new-feedback', onNewFeedback);
-      socket.off('ticket-created', onTicketCreated);
-      socket.off('ticket-updated', onTicketUpdated);
+      cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
@@ -128,7 +150,7 @@ export default function NotificationBell() {
           )}
           <p className="text-xs font-semibold text-gray-400 mb-2 px-1">Notifications</p>
           {notifications.length === 0 ? (
-            <p className="text-xs text-gray-500 px-1 py-3 text-center">Nothing yet — alerts appear here live.</p>
+            <p className="text-xs text-gray-500 px-1 py-3 text-center">Nothing yet — new activity appears here.</p>
           ) : (
             notifications.map((n) => (
               <div key={n.id} className="px-2 py-2 rounded-lg hover:bg-white/5 text-xs">
