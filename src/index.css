@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital@1&display=swap');
+@import 'tailwindcss';
+
+/* Dark is the default/baseline palette (matches the original design).
+   Light overrides live under :root[data-theme="light"] below. Toggled at
+   runtime by ThemeToggle.jsx, which sets this attribute on <html>. */
+:root {
+  --bg: #050810;
+  --surface: #0c1120;
+  --surface-translucent: rgba(12, 17, 32, 0.85);
+  --border: #1f2740;
+  --text-primary: #ffffff;
+  --text-200: #e5e7eb;
+  --text-300: #d1d5db;
+  --text-400: #9ca3af;
+  --text-500: #6b7280;
+  --text-600: #4b5563;
+  --overlay-subtle: rgba(255, 255, 255, 0.05);
+  --overlay-hover: rgba(255, 255, 255, 0.1);
+  --overlay-border: rgba(255, 255, 255, 0.1);
+  --auth-card-bg: rgba(8, 12, 22, 0.45);
+  --auth-input-bg: rgba(255, 255, 255, 0.06);
+  --auth-input-border: rgba(255, 255, 255, 0.12);
+  --auth-input-focus-bg: rgba(255, 255, 255, 0.09);
+  --auth-placeholder: #9aa2b8;
+  --field-label: #a78bfa;
+  --urgency-medium-text: #fde047;
+  --urgency-high-text: #fdba74;
+  --urgency-critical-text: #fca5a5;
+}
+
+:root[data-theme='light'] {
+  --bg: #f4f5fa;
+  --surface: #ffffff;
+  --surface-translucent: rgba(255, 255, 255, 0.85);
+  --border: #e1e3ee;
+  --text-primary: #14161f;
+  --text-200: #2b2f3d;
+  --text-300: #3f4354;
+  --text-400: #5a5f75;
+  --text-500: #6b7089;
+  --text-600: #8b8fa3;
+  --overlay-subtle: rgba(20, 22, 31, 0.04);
+  --overlay-hover: rgba(20, 22, 31, 0.07);
+  --overlay-border: rgba(20, 22, 31, 0.08);
+  --auth-card-bg: rgba(255, 255, 255, 0.6);
+  --auth-input-bg: rgba(20, 22, 31, 0.04);
+  --auth-input-border: rgba(20, 22, 31, 0.12);
+  --auth-input-focus-bg: rgba(20, 22, 31, 0.06);
+  --auth-placeholder: #7d8298;
+  --field-label: #7c5fd1;
+  --urgency-medium-text: #a16207;
+  --urgency-high-text: #c2410c;
+  --urgency-critical-text: #b91c1c;
+}
+
+@theme {
+  --color-base-bg: var(--bg);
+  --color-base-card: var(--surface);
+  --color-base-border: var(--border);
+  --color-accent: #8b5cf6;
+  --color-accent-light: #a78bfa;
+  --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.space-background {
+  background-image: url('./assets/frontBackground-1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.space-background-2 {
+  background-image: url('./assets/background-2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+
+/* Ambient violet glow orbs used behind hero/auth sections */
+.glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, rgba(167, 139, 250, 0.55), rgba(139, 92, 246, 0.05) 70%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.accent-italic {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Pill nav bar, matches the reference design's floating rounded nav */
+.pill-nav {
+  background: var(--surface-translucent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+}
+
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--overlay-subtle);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text-300);
+}
+
+.panel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+}
+
+.icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background: #8b5cf6;
+  color: white;
+  border-radius: 9999px;
+  padding: 10px 22px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+.btn-primary:hover {
+  background: #7c3aed;
+}
+
+.btn-outline {
+  background: var(--overlay-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 9999px;
+  padding: 10px 22px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.btn-outline:hover {
+  background: var(--overlay-hover);
+}
+
+.input-field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+}
+.input-field::placeholder {
+  color: var(--text-500);
+}
+
+/* The field-name label written above an input (e.g. "Search", "Form
+   title") — distinct from the input's own placeholder text. */
+.field-label {
+  color: var(--field-label);
+}
+.input-field:focus {
+  outline: none;
+  border-color: #8b5cf6;
+}
+
+/* Translucent glass card shared by the login/register auth screens,
+   so the page background image shows through slightly. */
+.auth-card {
+  background: var(--auth-card-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.auth-card-panel {
+  background: transparent;
+}
+
+.auth-input {
+  background: var(--auth-input-bg);
+  border: 1px solid var(--auth-input-border);
+  color: var(--text-primary);
+}
+.auth-input::placeholder {
+  color: var(--auth-placeholder);
+}
+.auth-input:focus {
+  border-color: #8b5cf6;
+  background: var(--auth-input-focus-bg);
+}
+
+.sentiment-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sentiment-positive { background: rgba(52, 211, 153, 0.12); color: #34d399; }
+.sentiment-neutral { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
+.sentiment-negative { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+
+:root[data-theme='light'] .sentiment-positive { color: #15803d; }
+:root[data-theme='light'] .sentiment-neutral { color: #a16207; }
+:root[data-theme='light'] .sentiment-negative { color: #b91c1c; }
+
+@media (max-width: 768px) {
+  .sentiment-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}
+
+/* Staggered entrance for the sentiment breakdown legend rows (Dashboard.jsx) */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-up {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
+/* --- Light-mode overrides for literal Tailwind color utilities ---
+   These utilities (text-white, text-gray-*, bg-white/N, border-white/N) are
+   used directly throughout the app's JSX, assuming a dark backdrop. Rather
+   than rewrite every className across ~15 files, this layer re-points the
+   exact utility classes actually in use at the same theme variables above,
+   scoped to [data-theme="light"] so dark mode (the default) is untouched. */
+:root[data-theme='light'] .text-white { color: var(--text-primary); }
+:root[data-theme='light'] .text-gray-200 { color: var(--text-200); }
+:root[data-theme='light'] .text-gray-300 { color: var(--text-300); }
+:root[data-theme='light'] .text-gray-400 { color: var(--text-400); }
+:root[data-theme='light'] .text-gray-500 { color: var(--text-500); }
+:root[data-theme='light'] .text-gray-600 { color: var(--text-600); }
+:root[data-theme='light'] .bg-white\/5 { background-color: var(--overlay-subtle); }
+:root[data-theme='light'] .hover\:bg-white\/5:hover { background-color: var(--overlay-subtle); }
+:root[data-theme='light'] .hover\:bg-white\/10:hover { background-color: var(--overlay-hover); }
+:root[data-theme='light'] .border-white\/10 { border-color: var(--overlay-border); }
+
+/* UrgencyBadge's medium/high/critical text colors are pale pastels tuned for
+   a dark background — darkened here so they stay readable on white. */
+:root[data-theme='light'] .text-yellow-300 { color: var(--urgency-medium-text); }
+:root[data-theme='light'] .text-orange-300 { color: var(--urgency-high-text); }
+:root[data-theme='light'] .text-red-300 { color: var(--urgency-critical-text); }
