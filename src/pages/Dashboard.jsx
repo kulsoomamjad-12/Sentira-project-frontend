@@ -151,13 +151,18 @@ function computeHealthScore(summary) {
 }
 
 // Derives a per-tag ticket status from the actual tickets linked to feedback
-// carrying that tag (a tag counts as "Open" if any linked ticket still is).
-function getTagStatus(tag, tickets) {
+// carrying that tag. Returns null when the tag has no ticket at all (those
+// tags are excluded from Top Fixes entirely — it only tracks topics that
+// already have, or still need, someone working them). Otherwise:
+//   green  = every linked ticket is resolved
+//   red    = at least one linked ticket is assigned to someone but still open/in-progress
+//   grey   = every linked ticket is still unassigned (nobody's working it yet)
+function getTagTicketStatus(tag, tickets) {
   const matching = tickets.filter((t) => t.feedback?.aiAnalysis?.tags?.includes(tag));
-  if (!matching.length) return { label: 'No ticket', dotClass: 'bg-gray-500' };
-  if (matching.some((t) => t.status === 'open')) return { label: 'Open', dotClass: 'bg-red-500' };
-  if (matching.some((t) => t.status === 'in-progress')) return { label: 'In Progress', dotClass: 'bg-yellow-500' };
-  return { label: 'Resolved', dotClass: 'bg-green-500' };
+  if (!matching.length) return null;
+  if (matching.every((t) => t.status === 'resolved')) return { label: 'Resolved', dotClass: 'bg-green-500' };
+  if (matching.some((t) => t.assignedTo)) return { label: 'Assigned', dotClass: 'bg-red-500' };
+  return { label: 'Unassigned', dotClass: 'bg-gray-500' };
 }
 
 function HealthRing({ score }) {
@@ -283,11 +288,17 @@ export default function Dashboard() {
   const tagNames = trends.map((t) => t._id);
   const visibleFeedbackIds = new Set(feedback.map((f) => f._id));
   const visibleTickets = tickets.filter((t) => visibleFeedbackIds.has(t.feedback?._id || t.feedback));
-  const openTicketCount = visibleTickets.filter((t) => t.status !== 'resolved').length;
+  const resolvedTicketCount = visibleTickets.filter((t) => t.status === 'resolved').length;
   const sentimentTrendData = buildSentimentTrendData(feedback);
   const monthlyComparison = buildMonthlySentimentComparison(feedback);
   const healthScore = computeHealthScore(summary);
-  const topTags = trends.slice(0, 5);
+  // Top Fixes only tracks topics that already have a ticket (assigned or
+  // still needing to be), so tags with no ticket at all are dropped here —
+  // not just hidden by the dot color.
+  const topTags = trends
+    .map((t) => ({ ...t, ticketStatus: getTagTicketStatus(t._id, visibleTickets) }))
+    .filter((t) => t.ticketStatus)
+    .slice(0, 5);
 
   const visibleFeedback = feedback
     .filter((f) => !sentimentFilter || f.aiAnalysis?.sentiment === sentimentFilter)
@@ -437,7 +448,7 @@ export default function Dashboard() {
                 <StatCard icon={ICONS.csat} value={summary?.csat ? `${summary.csat.average}/5` : '—'} label="CSAT score" />
                 <StatCard icon={ICONS.nps} value={summary?.nps ? `${summary.nps.score > 0 ? '+' : ''}${summary.nps.score}` : '—'} label="NPS score" />
                 <StatCard icon={ICONS.responses} value={summary?.totalFeedback ?? 0} label="Total responses" />
-                <StatCard icon={ICONS.tickets} value={openTicketCount} label="Open tickets" />
+                <StatCard icon={ICONS.tickets} value={resolvedTicketCount} label="Resolved tickets" />
               </div>
 
               <div className="panel-card p-5">
@@ -709,23 +720,20 @@ export default function Dashboard() {
               <div className="panel-card p-5">
                 <h2 className="font-semibold text-white text-sm mb-4">Top fixes</h2>
                 {topTags.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-8">No recurring topics yet.</p>
+                  <p className="text-gray-500 text-sm text-center py-8">No topics with tickets yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {topTags.map((t) => {
-                      const status = getTagStatus(t._id, visibleTickets);
-                      return (
-                        <div key={t._id} className="flex items-center justify-between text-xs py-1.5 border-t border-base-border first:border-t-0 first:pt-0">
-                          <span className="text-gray-300">
-                            {t._id} <span className="text-gray-600">· {t.totalMentions} mentions</span>
-                          </span>
-                          <span className="flex items-center gap-1.5 text-gray-400">
-                            <span className={`w-2 h-2 rounded-full ${status.dotClass}`} />
-                            {status.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+                    {topTags.map((t) => (
+                      <div key={t._id} className="flex items-center justify-between gap-2 text-xs py-1.5 border-t border-base-border first:border-t-0 first:pt-0">
+                        <span className="text-gray-300 min-w-0 truncate">
+                          {t._id} <span className="text-gray-600">· {t.totalMentions} mentions</span>
+                        </span>
+                        <span className="flex items-center gap-1.5 text-gray-400 shrink-0">
+                          <span className={`w-2 h-2 rounded-full ${t.ticketStatus.dotClass}`} />
+                          {t.ticketStatus.label}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

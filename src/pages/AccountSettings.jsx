@@ -153,8 +153,12 @@ export default function AccountSettings() {
 
       <div className="relative z-10">
         {/* Sidebar: fixed to the page's left edge, fully independent of the
-            centered column below — moving it never shifts anything else. */}
-        <div className="hidden lg:block fixed left-6 top-28 w-[200px] z-20">
+            centered column below — moving it never shifts anything else.
+            Only shown at xl+: below that, the fixed 200px sidebar plus the
+            centered max-w-2xl content column don't both fit without
+            overlapping (they'd collide anywhere from ~1024px to ~1150px),
+            so narrower screens use the horizontal tab bar instead. */}
+        <div className="hidden xl:block fixed left-6 top-28 w-[200px] z-20">
           <div className="panel-card p-3">
             <nav className="flex flex-col gap-1">
               {TABS.map((tab) => (
@@ -186,10 +190,10 @@ export default function AccountSettings() {
         </div>
 
         {/* Back to Dashboard: fixed, aligned with the sidebar's left edge at
-            lg+ (left-4 below that, where the sidebar itself is hidden). */}
+            xl+ (left-4 below that, where the sidebar itself is hidden). */}
         <Link
           to="/dashboard"
-          className="btn-primary fixed left-4 lg:left-6 top-8 z-20 inline-flex items-center gap-2 text-xs py-2 px-4 w-fit"
+          className="btn-primary fixed left-4 xl:left-6 top-8 z-20 inline-flex items-center gap-2 text-xs py-2 px-4 w-fit"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -209,9 +213,10 @@ export default function AccountSettings() {
           <p className="text-gray-400 text-sm">Manage your profile, password, and account.</p>
         </div>
 
-        {/* Mobile/tablet tab bar — the fixed sidebar only appears at lg+, so
-            below that this replaces it in normal document flow. */}
-        <div className="lg:hidden max-w-2xl mx-auto px-4 mb-4">
+        {/* Mobile/tablet/small-desktop tab bar — the fixed sidebar only
+            appears at xl+, so below that this replaces it in normal document
+            flow. */}
+        <div className="xl:hidden max-w-2xl mx-auto px-4 mb-4">
           <div className="panel-card p-3">
             <nav className="flex gap-1 overflow-x-auto">
               {TABS.map((tab) => (

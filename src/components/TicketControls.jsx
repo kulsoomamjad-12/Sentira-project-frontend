@@ -3,6 +3,18 @@ import { createTicket, updateTicket } from '../services/api';
 
 const STATUS_OPTIONS = ['open', 'in-progress', 'resolved'];
 
+// Shared "this one's done" look for a resolved ticket — used in every view
+// (assignee, admin, any other team member) so a resolved ticket reads the
+// same everywhere instead of some viewers seeing a plain "Status: resolved" line.
+function ResolvedStatus({ notes }) {
+  return (
+    <div className="text-xs">
+      <p className="text-accent-light font-semibold">✓ Resolved</p>
+      {notes && <p className="mt-1 text-gray-400">{notes}</p>}
+    </div>
+  );
+}
+
 // Ticket workflow controls rendered inside a FeedbackCard: creates a ticket
 // for a feedback submission, then lets its status/notes/assignee be edited.
 // Resolving the actual issue (status + notes) is the assigned team member's
@@ -67,7 +79,13 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
     }
   };
 
+  // Opening a ticket is an admin-only action (enforced again server-side);
+  // a team member just sees that none exists yet instead of a button that
+  // would fail.
   if (!ticket) {
+    if (!isAdmin) {
+      return <p className="text-xs text-gray-500">No ticket opened for this yet.</p>;
+    }
     return (
       <div>
         <button onClick={handleCreate} disabled={creating} className="btn-outline text-xs py-1.5 px-4">
@@ -82,12 +100,16 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
   if (isAdmin) {
     return (
       <div className="space-y-2">
-        <div className="text-xs text-gray-400">
-          <p>
-            Status: <span className="text-gray-300">{ticket.status}</span>
-          </p>
-          {ticket.resolutionNotes && <p className="mt-1 text-gray-500">{ticket.resolutionNotes}</p>}
-        </div>
+        {ticket.status === 'resolved' ? (
+          <ResolvedStatus notes={ticket.resolutionNotes} />
+        ) : (
+          <div className="text-xs text-gray-400">
+            <p>
+              Status: <span className="text-gray-300">{ticket.status}</span>
+            </p>
+            {ticket.resolutionNotes && <p className="mt-1 text-gray-500">{ticket.resolutionNotes}</p>}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-xs field-label">Assigned to</label>
           <select
@@ -112,6 +134,9 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
   }
 
   if (!canEditStatus) {
+    if (ticket.status === 'resolved') {
+      return <ResolvedStatus notes={ticket.resolutionNotes} />;
+    }
     return (
       <div className="text-xs text-gray-400">
         <p>
@@ -122,6 +147,13 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
         <p className="mt-1 text-gray-600">Only the assignee can edit this ticket.</p>
       </div>
     );
+  }
+
+  // Once the server confirms this ticket is resolved, the assignee is done
+  // with it — show the outcome instead of the editable form, so "Save
+  // ticket" doesn't keep sitting there after there's nothing left to save.
+  if (ticket.status === 'resolved') {
+    return <ResolvedStatus notes={ticket.resolutionNotes} />;
   }
 
   return (

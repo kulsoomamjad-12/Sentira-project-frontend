@@ -27,7 +27,7 @@ export default function TopNav() {
   return (
     <div className="fixed top-4 left-0 right-0 z-20 flex justify-center px-4">
       <div className="w-full max-w-4xl">
-        <nav className="pill-nav flex items-center justify-between gap-4 px-5 py-2.5">
+        <nav className="pill-nav flex items-center justify-between gap-2 sm:gap-4 px-4 sm:px-5 py-2.5">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <img src={logoIcon} alt="Sentira" className="w-6 h-6 rounded-md object-contain" />
             <span className="font-semibold text-sm text-white">sentira</span>

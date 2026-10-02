@@ -57,12 +57,12 @@ export default function FeedbackCard({ feedback, children, urgentNote }) {
         ))}
       </div>
 
-      <div className="flex justify-between text-xs text-gray-500 border-t border-base-border pt-3">
+      <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-gray-500 border-t border-base-border pt-3">
         <span>
           Emotion: {aiAnalysis?.emotion || 'n/a'} · Intensity: {aiAnalysis?.intensity ?? 'n/a'}/10
           {rating != null && ` · Rating: ${rating}`}
         </span>
-        <span>{new Date(createdAt).toLocaleDateString()}</span>
+        <span className="whitespace-nowrap">{new Date(createdAt).toLocaleDateString()}</span>
       </div>
 
       {children && <div className="mt-3 pt-3 border-t border-base-border">{children}</div>}

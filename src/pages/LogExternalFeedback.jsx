@@ -166,7 +166,7 @@ export default function LogExternalFeedback() {
                 <code>backend/.env</code>) — until then this returns a clear "not configured yet" error.
               </p>
               <form onSubmit={handleImport} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium field-label mb-1">Platform</label>
                     <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="input-field">

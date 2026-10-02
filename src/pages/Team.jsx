@@ -213,12 +213,12 @@ export default function Team() {
                   const canRemove = isAdmin && member.role !== 'admin' && member._id !== currentUser?._id;
                   return (
                     <div key={member._id} className="border-t border-base-border pt-2 first:border-t-0 first:pt-0">
-                      <div className="flex items-center justify-between text-sm">
-                        <div>
-                          <p className="text-white">{member.name}</p>
-                          <p className="text-gray-500 text-xs">{member.email}</p>
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <div className="min-w-0">
+                          <p className="text-white truncate">{member.name}</p>
+                          <p className="text-gray-500 text-xs truncate">{member.email}</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <span className="badge-chip capitalize">{member.role}</span>
                           {canRemove && confirmingRemoveId !== member._id && (
                             <button

@@ -61,23 +61,27 @@ export default function Home() {
             positioned relative to the viewport regardless, so it stays
             pinned in place the whole way down the page. */}
         <div className="fixed top-4 left-0 right-0 z-20 flex justify-center px-4">
-          <nav className="pill-nav flex items-center justify-between gap-4 w-full max-w-4xl px-5 py-2.5">
-            <Link to="/" className="flex items-center gap-2">
+          <nav className="pill-nav flex items-center justify-between gap-2 sm:gap-4 w-full max-w-4xl px-4 sm:px-5 py-2.5">
+            <Link to="/" className="flex items-center gap-2 shrink-0">
               <img src={logoIcon} alt="Sentira" className="w-6 h-6 rounded-md object-contain" />
               <span className="font-semibold text-sm text-white">sentira</span>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <ThemeToggle />
               {isLoggedIn ? (
-                <Link to="/dashboard" className="btn-primary text-xs py-2 px-5">
-                  Go to Dashboard
+                <Link to="/dashboard" className="btn-primary text-xs py-2 px-3 sm:px-5 whitespace-nowrap">
+                  <span className="hidden sm:inline">Go to Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
                 </Link>
               ) : (
                 <>
-                  <Link to="/login" className="text-xs font-medium text-gray-300 hover:text-white">
+                  <Link
+                    to="/login"
+                    className="hidden sm:inline-block text-xs font-medium text-gray-300 hover:text-white whitespace-nowrap"
+                  >
                     Log in
                   </Link>
-                  <Link to="/register" className="btn-primary text-xs py-2 px-5">
+                  <Link to="/register" className="btn-primary text-xs py-2 px-3 sm:px-5 whitespace-nowrap">
                     Get Started
                   </Link>
                 </>

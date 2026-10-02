@@ -65,7 +65,7 @@ export default function AIActions({ feedbackId, customerName, customerEmail }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button onClick={handleTranslate} disabled={translating} className="btn-outline text-xs py-1.5 px-3">
           {translating ? 'Translating...' : 'Translate'}
         </button>

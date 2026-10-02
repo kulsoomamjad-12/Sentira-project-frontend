@@ -331,7 +331,7 @@ export default function FormBuilder() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium field-label mb-1">Rating scale</label>
                     <select
@@ -451,12 +451,12 @@ export default function FormBuilder() {
               const customCount = form.fields?.length || 0;
               return (
                 <div key={form._id} className="panel-card p-5 mb-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-semibold text-white text-sm">{form.title}</p>
-                      {form.description && <p className="text-xs text-gray-500 mt-0.5">{form.description}</p>}
+                  <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-white text-sm break-words">{form.title}</p>
+                      {form.description && <p className="text-xs text-gray-500 mt-0.5 break-words">{form.description}</p>}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="badge-chip">{form.ratingType === 'nps' ? 'NPS (0-10)' : 'Stars (1-5)'}</span>
                       {customCount > 0 && (
                         <span className="badge-chip">
@@ -517,7 +517,7 @@ export default function FormBuilder() {
                   )}
 
                   <div className="flex items-center gap-2 mt-3">
-                    <input readOnly value={link} className="input-field text-xs text-gray-400" />
+                    <input readOnly value={link} className="input-field flex-1 min-w-0 text-xs text-gray-400" />
                     <button onClick={() => handleCopy(form)} className="btn-outline text-xs py-2 px-4 whitespace-nowrap">
                       {copiedId === form._id ? 'Copied!' : 'Copy'}
                     </button>
