@@ -13,6 +13,9 @@ export default function AIActions({ feedbackId, customerName, customerEmail }) {
   const [copied, setCopied] = useState(false);
 
   const [sending, setSending] = useState(false);
+  // Once a reply is sent, sending (and re-drafting) stays hidden for as long
+  // as this card is on screen — it only resets when the owner leaves the page
+  // and comes back, so the same customer can't be emailed twice by accident.
   const [sent, setSent] = useState(false);
 
   const [error, setError] = useState('');
@@ -32,7 +35,6 @@ export default function AIActions({ feedbackId, customerName, customerEmail }) {
 
   const handleDraft = async () => {
     setError('');
-    setSent(false);
     setDrafting(true);
     try {
       const res = await draftFeedbackReply(feedbackId);
@@ -69,9 +71,11 @@ export default function AIActions({ feedbackId, customerName, customerEmail }) {
         <button onClick={handleTranslate} disabled={translating} className="btn-outline text-xs py-1.5 px-3">
           {translating ? 'Translating...' : 'Translate'}
         </button>
-        <button onClick={handleDraft} disabled={drafting} className="btn-outline text-xs py-1.5 px-3">
-          {drafting ? 'Drafting...' : '✨ Draft AI reply'}
-        </button>
+        {!sent && (
+          <button onClick={handleDraft} disabled={drafting} className="btn-outline text-xs py-1.5 px-3">
+            {drafting ? 'Drafting...' : '✨ Draft AI reply'}
+          </button>
+        )}
       </div>
 
       {error && <p className="text-red-400 text-xs">{error}</p>}
@@ -98,17 +102,19 @@ export default function AIActions({ feedbackId, customerName, customerEmail }) {
           </div>
           <textarea
             value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              setSent(false);
-            }}
+            onChange={(e) => setDraft(e.target.value)}
+            readOnly={sent}
             rows={6}
             className="input-field text-sm leading-relaxed mb-3 resize-y"
           />
           <div className="flex flex-wrap items-center gap-2">
-            {customerEmail ? (
+            {sent ? (
+              <span className="text-xs font-semibold text-green-400">
+                ✓ Message sent successfully to {customerName || customerEmail}
+              </span>
+            ) : customerEmail ? (
               <button onClick={handleSend} disabled={sending} className="btn-primary text-xs py-1.5 px-4">
-                {sending ? 'Sending...' : sent ? '✓ Sent' : `Send to ${customerName || customerEmail}`}
+                {sending ? 'Sending...' : `Send to ${customerName || customerEmail}`}
               </button>
             ) : (
               <span className="text-[11px] text-gray-500 italic">No email on file — can't send directly</span>
