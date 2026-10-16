@@ -7,8 +7,8 @@ import AIActions from '../components/AIActions';
 import { LoadingState } from '../components/Spinner';
 
 const SENTIMENTS = ['Positive', 'Neutral', 'Negative'];
-const URGENCIES = ['low', 'medium', 'high', 'critical'];
-const URGENCY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+const URGENCIES = ['low', 'high', 'critical'];
+const URGENCY_RANK = { critical: 3, high: 2, low: 1 };
 
 export default function ActionCenter() {
   const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -98,7 +98,8 @@ export default function ActionCenter() {
     .filter((f) => {
       if (!search.trim()) return true;
       const q = search.toLowerCase();
-      return f.comment.toLowerCase().includes(q) || (f.customerName || '').toLowerCase().includes(q);
+      const answers = (f.responses || []).map((r) => (Array.isArray(r.value) ? r.value.join(' ') : String(r.value ?? '')));
+      return [f.comment, f.customerName || '', ...answers].some((text) => text.toLowerCase().includes(q));
     })
     // Urgent reviews always bubble to the top, regardless of the active
     // filter, so nothing that needs fixing gets buried under older items.

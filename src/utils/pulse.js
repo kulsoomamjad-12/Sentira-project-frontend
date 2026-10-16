@@ -1,4 +1,4 @@
-const URGENCY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+const URGENCY_RANK = { critical: 3, high: 2, low: 1 };
 
 // One real, data-derived headline sentence — never a fabricated statistic.
 // Falls back down a priority list depending on how much data actually exists.

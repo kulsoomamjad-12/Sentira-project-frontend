@@ -563,7 +563,6 @@ export default function Dashboard() {
                     <select value={urgencyFilter} onChange={(e) => setUrgencyFilter(e.target.value)} className="input-field w-auto text-xs py-1.5">
                       <option value="">All urgencies</option>
                       <option value="low">Low</option>
-                      <option value="medium">Medium</option>
                       <option value="high">High</option>
                       <option value="critical">Critical</option>
                     </select>

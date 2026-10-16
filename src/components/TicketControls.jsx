@@ -6,10 +6,14 @@ const STATUS_OPTIONS = ['open', 'in-progress', 'resolved'];
 // Shared "this one's done" look for a resolved ticket — used in every view
 // (assignee, admin, any other team member) so a resolved ticket reads the
 // same everywhere instead of some viewers seeing a plain "Status: resolved" line.
-function ResolvedStatus({ notes }) {
+// A resolved ticket is closed, so this is read-only for everyone — no
+// "Save ticket" / "Save assignment" buttons once it's done.
+function ResolvedStatus({ notes, resolvedBy }) {
   return (
     <div className="text-xs">
-      <p className="text-accent-light font-semibold">✓ Resolved</p>
+      <p className="text-accent-light font-semibold">
+        ✓ Resolved{resolvedBy && <span className="text-gray-400 font-normal"> by {resolvedBy}</span>}
+      </p>
       {notes && <p className="mt-1 text-gray-400">{notes}</p>}
     </div>
   );
@@ -96,20 +100,22 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
     );
   }
 
+  // Resolved = closed for everyone (admin, assignee, other members): just
+  // show the outcome, no editable fields or save buttons.
+  if (ticket.status === 'resolved') {
+    return <ResolvedStatus notes={ticket.resolutionNotes} resolvedBy={ticket.assignedTo?.name} />;
+  }
+
   // Admin: read-only status/notes, but can still reassign who's working it.
   if (isAdmin) {
     return (
       <div className="space-y-2">
-        {ticket.status === 'resolved' ? (
-          <ResolvedStatus notes={ticket.resolutionNotes} />
-        ) : (
-          <div className="text-xs text-gray-400">
-            <p>
-              Status: <span className="text-gray-300">{ticket.status}</span>
-            </p>
-            {ticket.resolutionNotes && <p className="mt-1 text-gray-500">{ticket.resolutionNotes}</p>}
-          </div>
-        )}
+        <div className="text-xs text-gray-400">
+          <p>
+            Status: <span className="text-gray-300">{ticket.status}</span>
+          </p>
+          {ticket.resolutionNotes && <p className="mt-1 text-gray-500">{ticket.resolutionNotes}</p>}
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-xs field-label">Assigned to</label>
           <select
@@ -134,9 +140,6 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
   }
 
   if (!canEditStatus) {
-    if (ticket.status === 'resolved') {
-      return <ResolvedStatus notes={ticket.resolutionNotes} />;
-    }
     return (
       <div className="text-xs text-gray-400">
         <p>
@@ -147,13 +150,6 @@ export default function TicketControls({ feedbackId, ticket, onChange, teamMembe
         <p className="mt-1 text-gray-600">Only the assignee can edit this ticket.</p>
       </div>
     );
-  }
-
-  // Once the server confirms this ticket is resolved, the assignee is done
-  // with it — show the outcome instead of the editable form, so "Save
-  // ticket" doesn't keep sitting there after there's nothing left to save.
-  if (ticket.status === 'resolved') {
-    return <ResolvedStatus notes={ticket.resolutionNotes} />;
   }
 
   return (
