@@ -154,6 +154,13 @@ function FieldCard({ field, index, total, onChange, onRemove, onMove }) {
   );
 }
 
+// The link customers open, usually on their phones. It always uses the public
+// website address (VITE_PUBLIC_SITE_URL), not whatever this page is open on.
+// Otherwise copying it while working on localhost would hand out a
+// "localhost" link that only works on this computer.
+const PUBLIC_SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin).replace(/\/+$/, '');
+const publicFormLink = (form) => `${PUBLIC_SITE_URL}/feedback/${form.publicSlug}`;
+
 export default function FormBuilder() {
   const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
   const canCreate = currentUser?.role === 'admin';
@@ -260,7 +267,7 @@ export default function FormBuilder() {
   };
 
   const handleCopy = (form) => {
-    const link = `${window.location.origin}/feedback/${form.publicSlug}`;
+    const link = publicFormLink(form);
     navigator.clipboard.writeText(link);
     setCopiedId(form._id);
     setTimeout(() => setCopiedId(''), 1500);
@@ -447,7 +454,7 @@ export default function FormBuilder() {
             </div>
           ) : (
             forms.map((form) => {
-              const link = `${window.location.origin}/feedback/${form.publicSlug}`;
+              const link = publicFormLink(form);
               const customCount = form.fields?.length || 0;
               return (
                 <div key={form._id} className="panel-card p-5 mb-3">

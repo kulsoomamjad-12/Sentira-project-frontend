@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Tolerates a VITE_API_URL pasted without "/api" or with a trailing slash —
+// every backend route lives under /api.
+const normalizeApiUrl = (url) => {
+  const trimmed = url.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+export const API_BASE_URL = normalizeApiUrl(import.meta.env.VITE_API_URL || 'http://localhost:5000/api');
 
 const api = axios.create({ baseURL: API_BASE_URL });
 
